@@ -121,7 +121,7 @@ namespace BillingManagement.Business
 
             Random rnd = new Random();
 
-            foreach (Customer c in customers)
+            foreach (Customer c in customers.OrderBy(c => c.Info))
             {
                 c.ContactInfos = new ObservableCollection<ContactInfo>();
 

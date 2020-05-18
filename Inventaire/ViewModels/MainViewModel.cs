@@ -1,4 +1,5 @@
-﻿using BillingManagement.Models;
+﻿using BillingManagement.Business;
+using BillingManagement.Models;
 using BillingManagement.UI.ViewModels.Commands;
 using System;
 using System.Collections.Generic;
@@ -13,8 +14,46 @@ namespace BillingManagement.UI.ViewModels
     {
 		private BaseViewModel _vm;
 		BillingManagementContext db = new BillingManagementContext();
-		ObservableCollection<Invoice> dbInvoices;		
-		ObservableCollection<Customer> dbCustomers;
+		private ObservableCollection<Invoice> dbInvoices;		
+		private ObservableCollection<Customer> dbCustomers;
+
+		public BillingManagementContext DB
+		{
+			get => db;
+
+			set
+			{
+				db = value;
+				OnPropertyChanged();
+			}
+
+		}
+
+		public ObservableCollection<Customer> DbCustomers
+		{
+			get => dbCustomers;
+
+			set
+			{
+				dbCustomers = value;
+				OnPropertyChanged();
+
+			}
+
+		}
+
+		public ObservableCollection<Invoice> DbInvoices
+		{
+			get => dbInvoices;
+
+			set
+			{
+
+				dbInvoices = value;
+				OnPropertyChanged();
+			}
+
+		}
 
 		public BaseViewModel VM
 		{
@@ -53,6 +92,7 @@ namespace BillingManagement.UI.ViewModels
 		public RelayCommand<Customer> SearchCommand { get; set; }
 		public MainViewModel()
 		{
+			InsertDataInDatabase();
 
 			dbInvoices = new ObservableCollection<Invoice>();
 			dbCustomers = new ObservableCollection<Customer>();
@@ -122,14 +162,61 @@ namespace BillingManagement.UI.ViewModels
 
 			Customer SelectedCustomer = customerViewModel.SelectedCustomer;
 			IEnumerable<Customer> customers = customerViewModel.Customers.ToList<Customer>();
-			IEnumerable<Customer> FoundCustomer = customerViewModel.Customers.ToList<Customer>();
+			IEnumerable<Customer> FoundCustomer = null;
+			
 
+			//Eviter erreur par ce Input vide
+			if(user_input != null)
+			{
+							
 			FoundCustomer = customers.Where(c => c.Name.ToUpper().StartsWith(user_input.ToUpper()) || c.LastName.ToUpper().StartsWith(user_input.ToUpper()));
 
-			if (FoundCustomer.Count() < 0)
+			if (FoundCustomer != null &	FoundCustomer.Count() < 0)
 				MessageBox.Show("Aucun " + user_input + " trouvé");
 			else
 				customerViewModel.SelectedCustomer = FoundCustomer.First();
+			}
+		}
+		
+
+		private void getDataFromDatabase()
+		{
+						
+			List<Invoice> InvoicesList = db.Invoices.ToList();
+			DbInvoices.Clear();
+			foreach (Invoice i in InvoicesList)
+				DbInvoices.Add(i);
+			if (invoiceViewModel != null) invoiceViewModel.SelectedInvoice = DbInvoices.First();
+
+			List<Customer> CustomersList = db.Customers.ToList();
+			DbCustomers.Clear();
+			foreach (Customer c in CustomersList)
+				DbCustomers.Add(c);
+
+			DbCustomers = new ObservableCollection<Customer>(DbCustomers.OrderBy(c => c.LastName));
+
+			//if (customerViewModel != null) customerViewModel.Customers = Customers;
+			//if (customerViewModel != null) customerViewModel.SelectedCustomer = Customers.First();
+
+		}
+
+		private void InsertDataInDatabase()
+		{
+			if(db.Customers.Count() <= 0)
+			{	
+
+				List<Customer> Customers = new CustomersDataService().GetAll().ToList();
+				List<Invoice> Invoices = new InvoicesDataService(Customers).GetAll().ToList();
+
+				foreach (Customer c in Customers)
+				{
+					db.Customers.Add(c);
+					db.SaveChanges();
+				}
+
+			}
+
+
 		}
 
 		private bool CanAddNewItem(object o)
