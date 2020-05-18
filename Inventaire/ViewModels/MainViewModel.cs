@@ -2,13 +2,19 @@
 using BillingManagement.UI.ViewModels.Commands;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text;
+using System.Windows;
 
 namespace BillingManagement.UI.ViewModels
 {
     class MainViewModel : BaseViewModel
     {
 		private BaseViewModel _vm;
+		BillingManagementContext db = new BillingManagementContext();
+		ObservableCollection<Invoice> dbInvoices;		
+		ObservableCollection<Customer> dbCustomers;
 
 		public BaseViewModel VM
 		{
@@ -43,9 +49,17 @@ namespace BillingManagement.UI.ViewModels
 
 		public DelegateCommand<Customer> AddInvoiceToCustomerCommand { get; private set; }
 
-
+		//COMMAND PAR MOI
+		public RelayCommand<Customer> SearchCommand { get; set; }
 		public MainViewModel()
 		{
+
+			dbInvoices = new ObservableCollection<Invoice>();
+			dbCustomers = new ObservableCollection<Customer>();
+
+			var sort = dbCustomers.OrderBy(x => x.LastName);
+			var CustomersSorted = new ObservableCollection<Customer>(sort);
+			SearchCommand = new RelayCommand<Customer>(SearchCustomer, CanAddNewItem);
 			ChangeViewCommand = new ChangeViewCommand(ChangeView);
 			DisplayInvoiceCommand = new DelegateCommand<Invoice>(DisplayInvoice);
 			DisplayCustomerCommand = new DelegateCommand<Customer>(DisplayCustomer);
@@ -55,7 +69,7 @@ namespace BillingManagement.UI.ViewModels
 
 			customerViewModel = new CustomerViewModel();
 			invoiceViewModel = new InvoiceViewModel(customerViewModel.Customers);
-
+					   
 			VM = customerViewModel;
 
 		}
@@ -100,6 +114,22 @@ namespace BillingManagement.UI.ViewModels
 				customerViewModel.Customers.Add(c);
 				customerViewModel.SelectedCustomer = c;
 			}
+		}
+
+		private void SearchCustomer(object parametre)
+		{
+			string user_input = searchCriteria as string;
+
+			Customer SelectedCustomer = customerViewModel.SelectedCustomer;
+			IEnumerable<Customer> customers = customerViewModel.Customers.ToList<Customer>();
+			IEnumerable<Customer> FoundCustomer = customerViewModel.Customers.ToList<Customer>();
+
+			FoundCustomer = customers.Where(c => c.Name.ToUpper().StartsWith(user_input.ToUpper()) || c.LastName.ToUpper().StartsWith(user_input.ToUpper()));
+
+			if (FoundCustomer.Count() < 0)
+				MessageBox.Show("Aucun " + user_input + " trouvé");
+			else
+				customerViewModel.SelectedCustomer = FoundCustomer.First();
 		}
 
 		private bool CanAddNewItem(object o)
