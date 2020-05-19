@@ -4,6 +4,7 @@ using BillingManagement.UI.ViewModels.Commands;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -92,7 +93,10 @@ namespace BillingManagement.UI.ViewModels
 		public RelayCommand<Customer> SearchCommand { get; set; }
 		public MainViewModel()
 		{
+			db = new BillingManagementContext();
+
 			InsertDataInDatabase();
+			
 
 			dbInvoices = new ObservableCollection<Invoice>();
 			dbCustomers = new ObservableCollection<Customer>();
@@ -108,6 +112,7 @@ namespace BillingManagement.UI.ViewModels
 			AddInvoiceToCustomerCommand = new DelegateCommand<Customer>(AddInvoiceToCustomer);
 
 			customerViewModel = new CustomerViewModel();
+			getDataFromDatabase();
 			invoiceViewModel = new InvoiceViewModel(customerViewModel.Customers);
 					   
 			VM = customerViewModel;
@@ -181,27 +186,33 @@ namespace BillingManagement.UI.ViewModels
 
 		private void getDataFromDatabase()
 		{
-						
-			List<Invoice> InvoicesList = db.Invoices.ToList();
+			
+			
+
+		List<Invoice> InvoicesList = db.Invoices.ToList();
 			DbInvoices.Clear();
 			foreach (Invoice i in InvoicesList)
 				DbInvoices.Add(i);
 			if (invoiceViewModel != null) invoiceViewModel.SelectedInvoice = DbInvoices.First();
 
 			List<Customer> CustomersList = db.Customers.ToList();
-			DbCustomers.Clear();
+			//DbCustomers.Clear();
 			foreach (Customer c in CustomersList)
 				DbCustomers.Add(c);
 
 			DbCustomers = new ObservableCollection<Customer>(DbCustomers.OrderBy(c => c.LastName));
 
-			//if (customerViewModel != null) customerViewModel.Customers = Customers;
-			//if (customerViewModel != null) customerViewModel.SelectedCustomer = Customers.First();
+			 customerViewModel.Customers = DbCustomers;
+			 customerViewModel.SelectedCustomer = DbCustomers.First();
 
+
+			 
 		}
 
 		private void InsertDataInDatabase()
 		{
+
+{
 			if(db.Customers.Count() <= 0)
 			{	
 
@@ -209,10 +220,11 @@ namespace BillingManagement.UI.ViewModels
 				List<Invoice> Invoices = new InvoicesDataService(Customers).GetAll().ToList();
 
 				foreach (Customer c in Customers)
-				{
+				
 					db.Customers.Add(c);
 					db.SaveChanges();
 				}
+
 
 			}
 

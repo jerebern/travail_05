@@ -17,7 +17,7 @@ namespace BillingManagement.UI.ViewModels
         public ObservableCollection<Customer> Customers
         {
             get => customers;
-            private set
+            set
             {
                 customers = value;
                 OnPropertyChanged();
@@ -42,7 +42,7 @@ namespace BillingManagement.UI.ViewModels
             DeleteCustomerCommand = new RelayCommand<Customer>(DeleteCustomer, CanDeleteCustomer);
             
 
-            InitValues();
+           // InitValues();
         }
 
         private void InitValues()
